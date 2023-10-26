@@ -1,8 +1,11 @@
 package com.fiatlux.inviteapi.db
 
+import com.fiatlux.inviteapi.models.InviteLinkDTO
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.*
+import org.jetbrains.exposed.sql.SizedIterable
 
 
 object TemporaryUserTable : IntIdTable() {
@@ -19,7 +22,9 @@ class TemporaryUserEntity(id: EntityID<Int>) : IntEntity(id) {
     var phoneNumber by TemporaryUserTable.phoneNumber
     var email by TemporaryUserTable.email
     var isActive by TemporaryUserTable.isActive
-    var inviteLinks by InviteLinkEntity referencedOn InviteLinkTable.userId
+
+    // Custom getter for inviteLinks
+    val inviteLinks: SizedIterable<InviteLinkEntity> get() = InviteLinkEntity.find { InviteLinkTable.userId eq id }
 }
 
 object InviteLinkTable : IntIdTable() {
@@ -32,4 +37,12 @@ class InviteLinkEntity(id: EntityID<Int>) : IntEntity(id) {
 
     var user by TemporaryUserEntity referencedOn InviteLinkTable.userId
     var isActive by InviteLinkTable.isActive
+
+    fun toDTO(): InviteLinkDTO {
+        return InviteLinkDTO(
+            id = this.id.value,  // Assuming `id` is of type `EntityID<Int>`
+            userId = this.user.toString(),
+            isActive = this.isActive
+        )
+    }
 }
